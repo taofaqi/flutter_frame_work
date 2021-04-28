@@ -1,7 +1,5 @@
-import 'dart:convert';
 import 'dart:ui';
 import 'dart:ui' as ui;
-import 'package:rxdart/rxdart.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/painting.dart';
@@ -11,6 +9,7 @@ import 'package:flutter_frame_work/framework/bean/frame_work_bean.dart';
 class FrameWorkView extends CustomPainter {
   BuildContext context;
   List<FrameWorkBean> list;
+  Map<String, ui.Image> imageMap;
   int index = 0;
 
   Paint _paint;
@@ -24,9 +23,11 @@ class FrameWorkView extends CustomPainter {
   //平均宽度，用于控制手势旋转
   double avgWidth;
 
-  FrameWorkView(BuildContext context, List<FrameWorkBean> list) {
+  FrameWorkView(BuildContext context, List<FrameWorkBean> list,
+      Map<String, ui.Image> imageMap) {
     this.context = context;
     this.list = list;
+    this.imageMap = imageMap;
     createPaint();
   }
 
@@ -40,12 +41,16 @@ class FrameWorkView extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    if (list != null && list.isNotEmpty && index < list.length) {
+    if (list != null &&imageMap!=null && list.isNotEmpty && imageMap.isNotEmpty &&index < list.length) {
       FrameWorkBean frameWorkBean = list[index];
       canvas.drawCircle(Offset(200.0, 200.0), 10, _paint);
-      getCurrentBitmap(frameWorkBean.imgId).then((value) {
-        canvas.drawImage(value, Offset(200.0, 200.0), _paint);
+      // getCurrentBitmap(frameWorkBean.imgId).then((value) {
+      //   canvas.drawImage(value, Offset(200.0, 200.0), _paint);
+      // });
+      imageMap.forEach((key, value) {
+        canvas.drawImage(value, Offset(0.0, 0.0), _paint);
       });
+
       drawPoints(canvas, frameWorkBean.points);
     }
   }
@@ -57,7 +62,7 @@ class FrameWorkView extends CustomPainter {
 
   /// 通过assets路径，获取资源图片
   Future<ui.Image> getCurrentBitmap(String imgId) async {
-    ByteData data = await rootBundle.load("assets/images/3.0x/$imgId.png");
+    ByteData data = await rootBundle.load("assets/images/3.0x/f$imgId.png");
     ui.Codec codec = await ui.instantiateImageCodec(data.buffer.asUint8List());
     ui.FrameInfo fi = await codec.getNextFrame();
     return fi.image;

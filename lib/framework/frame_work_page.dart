@@ -24,7 +24,7 @@ class FrameWorkState extends State<FrameWorkPage> {
     list = <FrameWorkBean>[];
     super.initState();
     Rx.fromCallable(() =>
-            DefaultAssetBundle.of(context).loadString('AssetManifest.json'))
+        DefaultAssetBundle.of(context).loadString('AssetManifest.json'))
         .flatMap((event) {
       final Iterable fileNameList = json
           .decode(event)
@@ -33,12 +33,19 @@ class FrameWorkState extends State<FrameWorkPage> {
       return Stream<String>.fromIterable(fileNameList);
     }).map((event) {
       return readAssetFileByStr(event);
-    }).listen((event) {
+    }).map((event) {
       event.then((value) {
         list.add(value);
+
+        getCurrentBitmap(value.imgId).then((valueImage){
+          imageMap[value.imgId] = valueImage;
+        }).whenComplete((){
+          setState(() { });
+        });
+
       });
-    }, onDone: () {
-      setState(() {});
+    }).listen((event) { },onDone: (){
+      // setState(() {});
     });
   }
 
@@ -51,9 +58,9 @@ class FrameWorkState extends State<FrameWorkPage> {
   Widget build(BuildContext context) {
     return Container(
         child: CustomPaint(
-      size: Size(500, 300),
-      painter: FrameWorkView(context, list),
-    ));
+          size: Size(500, 300),
+          painter: FrameWorkView(context, list,imageMap),
+        ));
   }
 
   ///读取Assets下的文件中的内容 to String
@@ -65,7 +72,7 @@ class FrameWorkState extends State<FrameWorkPage> {
 
   /// 通过assets路径，获取资源图片
   Future<ui.Image> getCurrentBitmap(String imgId) async {
-    ByteData data = await rootBundle.load("assets/images/3.0x/$imgId.png");
+    ByteData data = await rootBundle.load("assets/images/3.0x/f$imgId.png");
     ui.Codec codec = await ui.instantiateImageCodec(data.buffer.asUint8List());
     ui.FrameInfo fi = await codec.getNextFrame();
     return fi.image;
