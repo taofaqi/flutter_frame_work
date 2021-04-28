@@ -18,13 +18,18 @@ class FrameWorkPage extends StatefulWidget {
 class FrameWorkState extends State<FrameWorkPage> {
   List<FrameWorkBean> list;
   Map<String, ui.Image> imageMap = Map<String, ui.Image>();
+  double targetScale = 360.0 / 750.0;
+
+  double _downX, _upX;
+  bool isDrag = false;
+  int index = 0;
 
   @override
   void initState() {
     list = <FrameWorkBean>[];
     super.initState();
     Rx.fromCallable(() =>
-        DefaultAssetBundle.of(context).loadString('AssetManifest.json'))
+            DefaultAssetBundle.of(context).loadString('AssetManifest.json'))
         .flatMap((event) {
       final Iterable fileNameList = json
           .decode(event)
@@ -37,14 +42,14 @@ class FrameWorkState extends State<FrameWorkPage> {
       event.then((value) {
         list.add(value);
 
-        getCurrentBitmap(value.imgId).then((valueImage){
+        getCurrentBitmap(value.imgId).then((valueImage) {
           imageMap[value.imgId] = valueImage;
-        }).whenComplete((){
-          setState(() { });
+        }).whenComplete(() {
+          //TODO   刷新次数过多
+          setState(() {});
         });
-
       });
-    }).listen((event) { },onDone: (){
+    }).listen((event) {}, onDone: () {
       // setState(() {});
     });
   }
@@ -56,11 +61,42 @@ class FrameWorkState extends State<FrameWorkPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-        child: CustomPaint(
-          size: Size(500, 300),
-          painter: FrameWorkView(context, list,imageMap),
-        ));
+    return GestureDetector(
+      onHorizontalDragStart: (detail) {
+        _downX = detail.globalPosition.dx;
+      },
+      // onTapDown: (detail) {
+      //   _downX = detail.globalPosition.dx;
+      // },
+      // onTapUp: (detail) {
+      //   _upX = detail.globalPosition.dx;
+      // },
+      onHorizontalDragDown: (detail) {
+        _downX = detail.globalPosition.dx;
+        print("_downX---------------------$_downX");
+      },
+      onHorizontalDragUpdate: (detail){
+        detail.globalPosition.dx;
+      },
+      onHorizontalDragCancel: (){
+
+      },
+      onHorizontalDragEnd: (detail) {
+        ///TODO
+        index++;
+        if(index >= list.length){
+          index = 0;
+        }
+        setState(() {});
+        print("_downX---------------------$_upX");
+      },
+      onVerticalDragStart: (detail) {},
+      child: CustomPaint(
+        size: Size(MediaQuery.of(context).size.width,
+            MediaQuery.of(context).size.height),
+        painter: FrameWorkView(context, list, imageMap, index),
+      ),
+    );
   }
 
   ///读取Assets下的文件中的内容 to String
@@ -73,7 +109,10 @@ class FrameWorkState extends State<FrameWorkPage> {
   /// 通过assets路径，获取资源图片
   Future<ui.Image> getCurrentBitmap(String imgId) async {
     ByteData data = await rootBundle.load("assets/images/3.0x/f$imgId.png");
-    ui.Codec codec = await ui.instantiateImageCodec(data.buffer.asUint8List());
+    //TODO  Test
+    ui.Codec codec = await ui.instantiateImageCodec(data.buffer.asUint8List(),
+        targetWidth: (targetScale * 750).round(),
+        targetHeight: (targetScale * 400).round());
     ui.FrameInfo fi = await codec.getNextFrame();
     return fi.image;
   }

@@ -7,6 +7,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_frame_work/framework/bean/frame_work_bean.dart';
 
 class FrameWorkView extends CustomPainter {
+  //TODO
+  double targetScale = 360.0 / 750.0;
+  Size size;
+
   BuildContext context;
   List<FrameWorkBean> list;
   Map<String, ui.Image> imageMap;
@@ -24,10 +28,11 @@ class FrameWorkView extends CustomPainter {
   double avgWidth;
 
   FrameWorkView(BuildContext context, List<FrameWorkBean> list,
-      Map<String, ui.Image> imageMap) {
+      Map<String, ui.Image> imageMap,int index) {
     this.context = context;
     this.list = list;
     this.imageMap = imageMap;
+    this.index = index;
     createPaint();
   }
 
@@ -41,15 +46,18 @@ class FrameWorkView extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    if (list != null &&imageMap!=null && list.isNotEmpty && imageMap.isNotEmpty &&index < list.length) {
+    this.size = size;
+    if (list != null &&
+        imageMap != null &&
+        list.isNotEmpty &&
+        imageMap.isNotEmpty &&
+        index < list.length) {
       FrameWorkBean frameWorkBean = list[index];
-      canvas.drawCircle(Offset(200.0, 200.0), 10, _paint);
-      // getCurrentBitmap(frameWorkBean.imgId).then((value) {
-      //   canvas.drawImage(value, Offset(200.0, 200.0), _paint);
-      // });
-      imageMap.forEach((key, value) {
-        canvas.drawImage(value, Offset(0.0, 0.0), _paint);
-      });
+
+      imageMap[frameWorkBean.imgId].height;
+      imageMap[frameWorkBean.imgId].width;
+
+      canvas.drawImage(imageMap[frameWorkBean.imgId], Offset(0.0, 0.0), _paint);
 
       drawPoints(canvas, frameWorkBean.points);
     }
@@ -60,20 +68,23 @@ class FrameWorkView extends CustomPainter {
     return true;
   }
 
-  /// 通过assets路径，获取资源图片
-  Future<ui.Image> getCurrentBitmap(String imgId) async {
-    ByteData data = await rootBundle.load("assets/images/3.0x/f$imgId.png");
-    ui.Codec codec = await ui.instantiateImageCodec(data.buffer.asUint8List());
-    ui.FrameInfo fi = await codec.getNextFrame();
-    return fi.image;
-  }
-
   void drawPoints(Canvas canvas, List<FrameWorkBeanPoint> points) {
     if (points != null && points.isNotEmpty) {
+      FrameWorkBeanPoint point;
       for (var i = 0; i < points.length; i++) {
-        // canvas.drawCircle(c, radius, paint)
-
+        point = points[i];
+        canvas.drawCircle(
+            Offset(computeX(point.x), computeY(point.y)), 3, _paint);
       }
     }
+  }
+
+  //TODO   偏移有问题
+  double computeX(int x) {
+    return targetScale * x + size.width/52.0;
+  }
+//TODO   偏移有问题
+  double computeY(int y) {
+    return targetScale * y+ size.height/52.0;
   }
 }
